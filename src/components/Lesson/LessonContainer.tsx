@@ -47,6 +47,7 @@ const LessonContainer: React.FC<LessonContainerProps> = ({ lesson, onComplete })
   const { messages, currentMessageIndex, isComplete } = state;
 
   useEffect(() => {
+    console.log('Current Index:', currentMessageIndex, 'Content Length:', lesson.content?.length, 'Is Complete:', isComplete);
     if (currentMessageIndex < (lesson.content?.length ?? 0) - 1 && !isComplete) {
       const timer = setTimeout(() => {
         dispatch({ type: 'INCREMENT_INDEX' });
