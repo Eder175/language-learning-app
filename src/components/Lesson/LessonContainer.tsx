@@ -39,7 +39,7 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
 const LessonContainer: React.FC<LessonContainerProps> = ({ lesson, onComplete }) => {
   const { t } = useTranslation();
   const [state, dispatch] = useReducer(chatReducer, {
-    messages: lesson.content.slice(0, 1),
+    messages: lesson.content ? lesson.content.slice(0, 1) : [],
     currentMessageIndex: 0,
     isComplete: false,
   });
@@ -47,11 +47,12 @@ const LessonContainer: React.FC<LessonContainerProps> = ({ lesson, onComplete })
   const { messages, currentMessageIndex, isComplete } = state;
 
   useEffect(() => {
+    if (currentMessageIndex < (lesson.content?.length ?? 0) - 1 && !isComplete) {
       const timer = setTimeout(() => {
         dispatch({ type: 'INCREMENT_INDEX' });
         dispatch({
           type: 'ADD_MESSAGE',
-          payload: lesson.content[currentMessageIndex + 1],
+          payload: lesson.content![currentMessageIndex + 1],
         });
       }, 2000);
       return () => clearTimeout(timer);
@@ -81,13 +82,13 @@ const LessonContainer: React.FC<LessonContainerProps> = ({ lesson, onComplete })
     };
     dispatch({ type: 'ADD_MESSAGE', payload: userMessage });
 
-    // Simular resposta do bot com base na mensagem do usuário
-    const isCorrect = message.toLowerCase().includes('correct') || Math.random() > 0.3; // Simulação simples
+    const isCorrect = message.toLowerCase().includes('correct') || Math.random() > 0.3;
     const botResponse = isCorrect
       ? t('lesson.correctResponse')
       : t('lesson.incorrectResponse');
     addBotMessage(botResponse);
 
+    if (currentMessageIndex >= (lesson.content?.length ?? 0) - 1 && !isComplete) {
       addBotMessage(t('lesson.completionMessage'), 1500);
       setTimeout(() => {
         dispatch({ type: 'SET_COMPLETE' });
@@ -108,18 +109,19 @@ const LessonContainer: React.FC<LessonContainerProps> = ({ lesson, onComplete })
 
     addBotMessage(t('lesson.optionFeedback'));
 
+    if (currentMessageIndex < (lesson.content?.length ?? 0) - 1 && !isComplete) {
       setTimeout(() => {
         dispatch({ type: 'INCREMENT_INDEX' });
         dispatch({
           type: 'ADD_MESSAGE',
-          payload: lesson.content[currentMessageIndex + 1],
+          payload: lesson.content![currentMessageIndex + 1],
         });
       }, 1000);
     }
   };
 
   const handleQuizAnswer = (questionId: string, answerIndex: number) => {
-    const currentMessage = lesson.content.find((msg) => msg.id === questionId);
+    const currentMessage = lesson.content?.find((msg) => msg.id === questionId);
     const isCorrect = currentMessage?.correctAnswer === answerIndex;
 
     const userAnswer: Message = {
@@ -136,11 +138,12 @@ const LessonContainer: React.FC<LessonContainerProps> = ({ lesson, onComplete })
       : t('lesson.incorrectQuizResponse');
     addBotMessage(feedback);
 
+    if (currentMessageIndex < (lesson.content?.length ?? 0) - 1 && !isComplete) {
       setTimeout(() => {
         dispatch({ type: 'INCREMENT_INDEX' });
         dispatch({
           type: 'ADD_MESSAGE',
-          payload: lesson.content[currentMessageIndex + 1],
+          payload: lesson.content![currentMessageIndex + 1],
         });
       }, 1000);
     }
@@ -150,7 +153,7 @@ const LessonContainer: React.FC<LessonContainerProps> = ({ lesson, onComplete })
     const userAudio: Message = {
       id: Date.now().toString(),
       type: 'audio',
-      content: '��� [Mensagem de áudio]',
+      content: '🎤 [Mensagem de áudio]',
       sender: 'user',
       timestamp: new Date(),
     };

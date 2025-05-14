@@ -37,7 +37,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, onStartRecording }
           onClick={onStartRecording}
           className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
         >
-          í¾¤
+          ðŸŽ¤
         </button>
       </form>
     </div>
