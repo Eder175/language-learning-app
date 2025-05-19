@@ -1,22 +1,31 @@
-// Tipagem para mensagens no chat
-export type Sender = 'user' | 'bot';
+import express from 'express';
+import routes from './routes';
 
-export type MessageType = 'text' | 'option' | 'quiz' | 'audio';
+const app = express();
+const PORT = process.env.PORT || 3001;
 
-export interface Message {
-  id: string;
-  type: MessageType;
-  content: string;
-  sender: Sender;
-  timestamp: Date;
-  options?: string[]; // Para mensagens com opções
-  correctAnswer?: number; // Para quizzes
-}
+app.use(express.json());
+app.use('/', routes);
 
-// Tipagem para uma lição
-export interface Lesson {
-  id: string;
-  title: string;
-  content: Message[];
-  language: string;
-}
+// Middleware para rotas não encontradas (404)
+app.use((req, res) => {
+  res.status(404).json({
+    status: 'error',
+    message: 'Rota não encontrada',
+    path: req.originalUrl
+  });
+});
+
+// Middleware global de tratamento de erros (500)
+app.use((err, req, res, next) => {
+  console.error('Erro global:', err);
+  res.status(500).json({
+    status: 'error',
+    message: 'Erro interno do servidor',
+    details: err.message || err
+  });
+});
+
+app.listen(PORT, () => {
+  console.log(`Servidor rodando em http://localhost:${PORT}`);
+});
