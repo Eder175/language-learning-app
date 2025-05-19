@@ -1,7 +1,10 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router, Request, Response } from 'express';
 import { sendMessage } from '../controllers/message.controller';
+import { authenticateJWT } from '../middlewares/auth';
+import jwt from 'jsonwebtoken';
 
 const router = Router();
+const JWT_SECRET = process.env.JWT_SECRET || 'linguaverse_super_secret';
 
 /**
  * Rota de status da API
@@ -15,21 +18,33 @@ router.get('/', (req: Request, res: Response) => {
 });
 
 /**
- * Rota principal para receber mensagens
+ * Rota de login para gerar token JWT
+ * (No futuro: validar usuário/senha no banco de dados)
  */
-router.post('/message', sendMessage);
+router.post('/login', (req: Request, res: Response) => {
+  const { username } = req.body;
+  if (!username) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Usuário é obrigatório.',
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  // Gera token JWT
+  const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '2h' });
+
+  return res.status(200).json({
+    status: 'success',
+    message: 'Login realizado com sucesso!',
+    token,
+    timestamp: new Date().toISOString()
+  });
+});
 
 /**
- * (Opcional) Middleware para rotas não encontradas dentro do escopo do router
- * 
- * Se preferir, pode deixar esse tratamento global no app principal (index.ts)
+ * Rota protegida para receber mensagens
  */
-// router.use((req: Request, res: Response) => {
-//   res.status(404).json({
-//     status: 'error',
-//     message: 'Rota não encontrada',
-//     path: req.originalUrl
-//   });
-// });
+router.post('/message', authenticateJWT, sendMessage);
 
 export default router;
