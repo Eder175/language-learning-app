@@ -1,1 +1,1 @@
-{"root":["./src/index.ts","./src/controllers/message.controller.ts","./src/routes/index.ts"],"version":"5.8.3"}
+{"root":["./src/index.ts","./src/controllers/message.controller.ts","./src/middlewares/auth.ts","./src/middlewares/errorhandler.ts","./src/routes/index.ts"],"version":"5.8.3"}
