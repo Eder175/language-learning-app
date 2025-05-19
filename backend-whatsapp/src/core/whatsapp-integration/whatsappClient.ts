@@ -1,37 +1,55 @@
-// src/core/whatsapp-integration/whatsappClient.ts
 import { Client, LocalAuth, Message } from 'whatsapp-web.js';
+import qrcode from 'qrcode-terminal';
+import { getUser, saveUserProgress, updateUserPoints } from '../services/user.service'; // Implemente esses métodos!
+import { detectIntent, processIntent } from './intentEngine'; // Engine de intenção
+import { generateAIResponse } from './aiEngine'; // Integração com IA
 
 const client = new Client({
   authStrategy: new LocalAuth({ clientId: "linguaverse" }),
   puppeteer: { headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] }
 });
 
-// Log QR code para autenticação
 client.on('qr', (qr) => {
   console.log('\n====================');
   console.log('🔗 Escaneie este QR Code no WhatsApp para conectar:');
-  console.log(qr);
+  qrcode.generate(qr, { small: true });
   console.log('====================\n');
 });
 
-// Log de pronto
 client.on('ready', () => {
-  console.log('✅ WhatsApp Client conectado e pronto para uso!');
+  console.log('✅ LinguaVerse conectado e pronto para revolucionar o aprendizado!');
 });
 
-// Log de desconexão
-client.on('disconnected', (reason) => {
-  console.error('❌ WhatsApp Client desconectado:', reason);
-});
-
-// Log de mensagens recebidas
 client.on('message', async (message: Message) => {
-  console.log(`📩 Mensagem recebida de ${message.from}: ${message.body}`);
+  const userId = message.from;
+  const user = await getUser(userId) || { id: userId, name: '', points: 0, level: 1, streak: 0 };
 
-  // Exemplo de resposta automática (pode evoluir para IA)
-  if (message.body.toLowerCase() === 'oi' || message.body.toLowerCase() === 'olá') {
-    await message.reply('Olá! 👋 Eu sou o LinguaVerse, seu assistente de idiomas. Como posso ajudar você hoje?');
+  // Detecta intenção do usuário
+  const intent = detectIntent(message.body);
+
+  // Processa intenção (tradução, desafio, motivação, etc)
+  const response = await processIntent(intent, message.body, user);
+
+  // Se não for intenção conhecida, chama IA
+  let finalResponse = response;
+  if (!response) {
+    finalResponse = await generateAIResponse(message.body, user);
   }
+
+  // Atualiza pontos, progresso, etc
+  await updateUserPoints(userId, intent);
+
+  // Responde ao usuário
+  await message.reply(finalResponse);
+
+  // Exemplo: envia áudio motivacional se o usuário acertar um desafio
+  if (intent === 'desafio_acertou') {
+    // await message.reply('audio.mp3'); // Implemente envio de áudio
+  }
+});
+
+client.on('disconnected', (reason) => {
+  console.error('❌ LinguaVerse desconectado:', reason);
 });
 
 client.initialize();
